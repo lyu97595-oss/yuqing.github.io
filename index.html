@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;Merry Christmas WebGL - Interactive 3D&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/react@18/umd/react.production.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/@babel/standalone/babel.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"&gt;&lt;/script&gt;</p>
+<p class="p2"><span class="Apple-converted-space">    </span></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&amp;display=swap');</p>
+<p class="p1"><span class="Apple-converted-space">        </span>body { margin: 0; background: #050505; overflow: hidden; color: white; }</p>
+<p class="p1"><span class="Apple-converted-space">        </span>canvas { display: block; }</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.glass {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(255, 255, 255, 0.05);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>backdrop-filter: blur(10px);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid rgba(255, 255, 255, 0.1);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.font-cursive { font-family: 'Dancing Script', cursive; }</p>
+<p class="p1"><span class="Apple-converted-space">        </span>#video-container video { transform: scaleX(-1); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="root"&gt;&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script type="text/babel"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const { useState, useRef, useEffect, useMemo, useLayoutEffect } = React;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// --- 核心数学工具 ---</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const generateConePoints = (count, radius, height) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const pts = [];</p>
+<p class="p1"><span class="Apple-converted-space">            </span>for (let i = 0; i &lt; count; i++) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const h = Math.random() * height;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const r = (radius * (height - h)) / height;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const theta = Math.random() * Math.PI * 2;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>pts.push(new THREE.Vector3(Math.cos(theta) * r, h - height / 2, Math.sin(theta) * r));</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return pts;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>const generateSpherePoints = (count, radius) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const pts = [];</p>
+<p class="p1"><span class="Apple-converted-space">            </span>for (let i = 0; i &lt; count; i++) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const u = Math.random();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const v = Math.random();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const theta = 2 * Math.PI * u;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const phi = Math.acos(2 * v - 1);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>pts.push(new THREE.Vector3(radius * Math.sin(phi) * Math.cos(theta), radius * Math.sin(phi) * Math.sin(theta), radius * Math.cos(phi)));</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return pts;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// --- 3D 圣诞树组件 ---</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const ChristmasScene = ({ phase, setPhase }) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const mountRef = useRef(null);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const meshRef = useRef();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const mouse = useRef(new THREE.Vector2());</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>useEffect(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const scene = new THREE.Scene();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });</p>
+<p class="p1"><span class="Apple-converted-space">                </span>renderer.setSize(window.innerWidth, window.innerHeight);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>renderer.setPixelRatio(window.devicePixelRatio);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>mountRef.current.appendChild(renderer.domElement);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// 灯光</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>scene.add(ambientLight);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const pointLight = new THREE.PointLight(0xffd700, 2);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>pointLight.position.set(5, 5, 5);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>scene.add(pointLight);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// 粒子系统</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const count = 5000;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const geometry = new THREE.SphereGeometry(0.03, 8, 8);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const material = new THREE.MeshStandardMaterial({ color: 0x2D5A27, emissive: 0x1a3316 });</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const mesh = new THREE.InstancedMesh(geometry, material, count);</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>const treePoints = generateConePoints(count, 4, 8);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const nebulaPoints = generateSpherePoints(count, 10);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const currentPositions = treePoints.map(p =&gt; p.clone());</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>const dummy = new THREE.Object3D();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>scene.add(mesh);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>meshRef.current = { mesh, treePoints, nebulaPoints, currentPositions };</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>camera.position.z = 15;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// 动画循环</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const animate = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>requestAnimationFrame(animate);</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// 简单的交互斥力</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (phase === 'tree') {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>currentPositions.forEach((pos, i) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>dummy.position.copy(pos);</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>dummy.updateMatrix();</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>mesh.setMatrixAt(i, dummy.matrix);</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>mesh.instanceMatrix.needsUpdate = true;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>renderer.render(scene, camera);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>};</p>
+<p class="p1"><span class="Apple-converted-space">                </span>animate();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// 响应式</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const handleResize = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>camera.aspect = window.innerWidth / window.innerHeight;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>camera.updateProjectionMatrix();</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>renderer.setSize(window.innerWidth, window.innerHeight);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>};</p>
+<p class="p1"><span class="Apple-converted-space">                </span>window.addEventListener('resize', handleResize);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>return () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>window.removeEventListener('resize', handleResize);</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>mountRef.current?.removeChild(renderer.domElement);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>};</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}, []);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>// 监听阶段变化触发 GSAP</p>
+<p class="p1"><span class="Apple-converted-space">            </span>useEffect(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (phase === 'blooming' &amp;&amp; meshRef.current) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>meshRef.current.currentPositions.forEach((pos, i) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>gsap.to(pos, {</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>x: meshRef.current.nebulaPoints[i].x,</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>y: meshRef.current.nebulaPoints[i].y,</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>z: meshRef.current.nebulaPoints[i].z,</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>duration: 2,</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>ease: "expo.out",</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>onComplete: () =&gt; { if(i === 0) setPhase('nebula'); }</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                </span>} else if (phase === 'collapsing' &amp;&amp; meshRef.current) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>meshRef.current.currentPositions.forEach((pos, i) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>gsap.to(pos, {</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>x: meshRef.current.treePoints[i].x,</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>y: meshRef.current.treePoints[i].y,</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>z: meshRef.current.treePoints[i].z,</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>duration: 2,</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>ease: "power4.inOut",</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>onComplete: () =&gt; { if(i === 0) setPhase('tree'); }</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}, [phase]);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>return &lt;div ref={mountRef} className="fixed inset-0" /&gt;;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// --- 主应用 ---</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const App = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const [phase, setPhase] = useState('tree'); // tree, blooming, nebula, collapsing</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const [isCamOpen, setIsCamOpen] = useState(false);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const [isPlaying, setIsPlaying] = useState(false);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const audioRef = useRef(new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3')); // 示例BGM</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>const togglePlay = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (isPlaying) audioRef.current.pause();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>else audioRef.current.play();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>setIsPlaying(!isPlaying);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>return (</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="relative w-full h-screen"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;ChristmasScene phase={phase} setPhase={setPhase} /&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>{/* UI Overlay */}</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div className="relative z-10 pointer-events-none flex flex-col justify-between h-full p-8 text-white"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div className="flex justify-between items-start pointer-events-auto"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div className="glass p-6 rounded-2xl border-white/20"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;h2 className="text-xs tracking-widest opacity-60 uppercase mb-2"&gt;Current Phase&lt;/h2&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;p className="text-2xl font-bold tracking-tighter capitalize"&gt;{phase}&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div id="video-container" className="glass w-48 h-36 rounded-2xl overflow-hidden relative border-white/20"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>{!isCamOpen ? (</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;div className="w-full h-full flex items-center justify-center text-[10px] opacity-40 text-center px-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                        </span>CAMERA OFF&lt;br/&gt;CLICK "ENABLE GESTURE"</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>) : (</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;div className="w-full h-full bg-black/40 animate-pulse flex items-center justify-center text-xs"&gt;Loading AI Model...&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>)}</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div className="text-center"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;h1 className="text-7xl md:text-9xl font-cursive mb-4 pointer-events-none select-none drop-shadow-2xl text-yellow-500/80"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>Merry Christmas</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div className="flex flex-col items-center gap-6 pointer-events-auto"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div className="flex gap-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;button<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>onClick={() =&gt; setPhase(phase === 'tree' ? 'blooming' : 'collapsing')}</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>className="px-8 py-3 glass rounded-full hover:bg-white/10 transition-all font-bold tracking-widest text-xs uppercase"</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>{phase === 'tree' ? 'Trigger Bloom (Open Palm)' : 'Reset Tree (Close Fist)'}</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;button<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>onClick={() =&gt; setIsCamOpen(!isCamOpen)}</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>className="px-8 py-3 glass rounded-full hover:bg-white/10 transition-all font-bold tracking-widest text-xs uppercase"</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>{isCamOpen ? 'Disable Gesture' : 'Enable Gesture'}</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div className="glass px-8 py-4 rounded-full flex items-center gap-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;div className={`w-8 h-8 rounded-full border-2 border-white/30 flex items-center justify-center ${isPlaying ? 'animate-spin' : ''}`}&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>❄️</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;div className="text-left leading-none"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;p className="text-[10px] opacity-50 uppercase tracking-tighter"&gt;Now Playing&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;p className="text-sm font-semibold"&gt;Merry Christmas Mr. Lawrence&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;button onClick={togglePlay} className="ml-4 hover:scale-110 transition-transform"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                    </span>{isPlaying ? '⏸️' : '▶️'}</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>{/* Background Noise/Static */}</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>const root = ReactDOM.createRoot(document.getElementById('root'));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>root.render(&lt;App /&gt;);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
